@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CTI Secure</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #06111f;
+      color: #f0f4f8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+    .header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+    .logo { background: #1a73e8; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .header-title { font-size: 14px; font-weight: 700; letter-spacing: 0.1em; }
+    .banner { background: rgba(255,179,0,0.1); border: 1px solid rgba(255,179,0,0.3); color: #ffb300; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 16px; border-radius: 20px; margin-bottom: 24px; }
+    .card { background: #0d1e30; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 40px 32px; width: 100%; max-width: 440px; position: relative; }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #1a73e8, #00c2ff); border-radius: 20px 20px 0 0; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .icon { font-size: 40px; text-align: center; margin-bottom: 20px; }
+    .stepper { display: flex; gap: 6px; justify-content: center; margin-bottom: 8px; }
+    .dot { height: 3px; border-radius: 2px; }
+    .dot.active { width: 32px; background: #00c2ff; }
+    .dot.done { width: 32px; background: #1a73e8; }
+    .dot.inactive { width: 20px; background: rgba(255,255,255,0.15); }
+    .step-label { text-align: center; font-size: 10px; color: #00c2ff; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px; }
+    h1 { font-size: 22px; font-weight: 600; line-height: 1.3; text-align: center; margin-bottom: 10px; }
+    .subtitle { font-size: 13px; color: #6b8499; text-align: center; line-height: 1.6; margin-bottom: 24px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 12px; color: #6b8499; margin-bottom: 6px; }
+    .field input, .field select { width: 100%; background: #112030; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 14px; color: #f0f4f8; font-size: 14px; font-family: inherit; outline: none; appearance: none; }
+    .field input:focus, .field select:focus { border-color: #00c2ff; }
+    .field input::placeholder { color: #6b8499; }
+    .consent { display: flex; align-items: flex-start; gap: 10px; margin: 16px 0 20px; }
+    .consent input[type=checkbox] { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; accent-color: #00c2ff; cursor: pointer; }
+    .consent label { font-size: 11px; color: #6b8499; line-height: 1.5; }
+    .consent a { color: #00c2ff; }
+    .btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-primary { background: linear-gradient(135deg, #1a73e8, #00c2ff); color: white; }
+    .btn-green { background: linear-gradient(135deg, #00c853, #00e676); color: #001a0a; margin-top: 8px; }
+    .btn-red { background: linear-gradient(135deg, #c62828, #ff3d3d); color: white; margin-top: 8px; }
+    .disclaimer { font-size: 11px; color: #6b8499; text-align: center; margin-top: 14px; line-height: 1.6; }
+    .trust { display: flex; justify-content: center; gap: 24px; margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.06); }
+    .trust-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 9px; color: #6b8499; letter-spacing: 0.08em; text-transform: uppercase; }
+    .trust-item span:first-child { font-size: 18px; }
+    .breach-count { font-size: 56px; font-weight: 700; text-align: center; margin: 8px 0; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; margin: 0 auto 8px; display: block; width: fit-content; }
+    .badge-red { background: rgba(255,61,61,0.15); color: #ff3d3d; border: 1px solid rgba(255,61,61,0.3); }
+    .badge-green { background: rgba(0,230,118,0.1); color: #00e676; border: 1px solid rgba(0,230,118,0.2); }
+    .error-msg { color: #ff3d3d; font-size: 12px; margin-top: 6px; display: none; }
+    .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .time-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+    .time-slot { padding: 10px; background: #112030; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; text-align: center; font-size: 13px; cursor: pointer; color: #f0f4f8; font-family: inherit; }
+    .time-slot:hover, .time-slot.selected { border-color: #00c2ff; color: #00c2ff; background: rgba(0,194,255,0.08); }
+  </style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">&#x1F6E1;</div>
+  <span class="header-title">CTI SECURE</span>
+</div>
+<div class="banner">&#x26A1; Intern demo &mdash; endast f&ouml;r test&auml;ndam&aring;l</div>
+<div class="card">
+  <div class="screen active" id="s1">
+    <div class="icon">&#x1F50D;</div>
+    <div class="stepper"><div class="dot active"></div><div class="dot inactive"></div></div>
+    <div class="step-label">Steg 1 av 2</div>
+    <h1>Har din e-post, ditt l&ouml;senord eller dina personuppgifter blivit stulna?</h1>
+    <p class="subtitle">Kontrollera gratis om ditt f&ouml;retag &auml;r drabbat av ett dataintr&aring;ng.</p>
+    <div class="field">
+      <label for="f-email">E-postadress</label>
+      <input type="email" id="f-email" placeholder="namn@foretag.se">
+      <div class="error-msg" id="email-err">Ange en giltig e-postadress.</div>
+    </div>
+    <div class="consent">
+      <input type="checkbox" id="f-consent">
+      <label for="f-consent">Jag godk&auml;nner att mina uppgifter behandlas enligt v&aring;r <a href="#">integritetspolicy</a></label>
+    </div>
+    <button class="btn btn-primary" id="btn1" onclick="step1()">Kolla gratis &rarr;</button>
+    <p class="disclaimer">Vi kontrollerar din e-post mot k&auml;nda dataintr&aring;ng. Dina uppgifter delas aldrig med tredje part.</p>
+    <div class="trust">
+      <div class="trust-item"><span>&#x1F512;</span><span>Krypterat</span></div>
+      <div class="trust-item"><span>&#x2705;</span><span>Verifierat</span></div>
+      <div class="trust-item"><span>&#x1F6E1;</span><span>GDPR-Ready</span></div>
+    </div>
+  </div>
+  <div class="screen" id="s2">
+    <div class="icon">&#x1F3E2;</div>
+    <div class="stepper"><div class="dot done"></div><div class="dot active"></div></div>
+    <div class="step-label">Steg 2 av 2</div>
+    <h1>Ber&auml;tta lite mer om ditt f&ouml;retag</h1>
+    <p class="subtitle">Vi beh&ouml;ver dessa detaljer f&ouml;r att ge dig en anpassad hotanalys.</p>
+    <div class="field">
+      <label for="f-company">F&ouml;retagsnamn</label>
+      <input type="text" id="f-company" placeholder="F&ouml;retaget AB">
+    </div>
+    <div class="field">
+      <label for="f-industry">Bransch</label>
+      <select id="f-industry">
+        <option value="">V&auml;lj bransch</option>
+        <option>Finansiella tj&auml;nster</option>
+        <option>Sjukv&aring;rd</option>
+        <option>Teknologi</option>
+        <option>Handel &amp; Retail</option>
+        <option>Tillverkning</option>
+        <option>Offentlig sektor</option>
+        <option>Utbildning</option>
+        <option>Energi</option>
+        <option>Telekommunikation</option>
+        <option>Media &amp; Underhållning</option>
+        <option>Transport</option>
+        <option>Professionella tj&auml;nster</option>
+        <option>Annat</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-size">F&ouml;retagsstorlek</label>
+      <select id="f-size">
+        <option value="">Antal anst&auml;llda</option>
+        <option>1&ndash;10 anst&auml;llda</option>
+        <option>11&ndash;50 anst&auml;llda</option>
+        <option>51&ndash;200 anst&auml;llda</option>
+        <option>201&ndash;500 anst&auml;llda</option>
+        <option>501&ndash;1000 anst&auml;llda</option>
+        <option>1000+ anst&auml;llda</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" id="btn2" onclick="step2()">Visa resultat &rarr;</button>
+    <p class="disclaimer">Genom att klicka godk&auml;nner du v&aring;r behandling av f&ouml;retagsuppgifter enligt integritetspolicyn.</p>
+    <div class="trust">
+      <div class="trust-item"><span>&#x1F512;</span><span>Krypterat</span></div>
+      <div class="trust-item"><span>&#x2705;</span><span>Verifierat</span></div>
+      <div class="trust-item"><span>&#x1F6E1;</span><span>GDPR-Ready</span></div>
+    </div>
+  </div>
+  <div class="screen" id="s-clean">
+    <div class="icon">&#x2705;</div>
+    <div class="breach-count" style="color:#00e676">0</div>
+    <div class="badge badge-green">&#x25CF; Inga intr&aring;ng</div>
+    <h1 style="margin-top:16px">Bra nyheter! Inga intr&aring;ng hittades</h1>
+    <p class="subtitle">Din e-post hittades inte i n&aring;gra k&auml;nda dataintr&aring;ng.</p>
+    <button class="btn btn-green" onclick="show('s-booking')">F&aring; en gratis s&auml;kerhetsanalys &rarr;</button>
+    <div class="trust" style="margin-top:20px">
+      <div class="trust-item"><span>&#x1F512;</span><span>Krypterat</span></div>
+      <div class="trust-item"><span>&#x2705;</span><span>Verifierat</span></div>
+      <div class="trust-item"><span>&#x1F6E1;</span><span>GDPR-Ready</span></div>
+    </div>
+  </div>
+  <div class="screen" id="s-breach">
+    <div class="icon">&#x26A0;&#xFE0F;</div>
+    <div class="breach-count" id="breach-num" style="color:#ff3d3d">5</div>
+    <div class="badge badge-red" id="breach-badge">&#x25CF; H&Ouml;G RISK</div>
+    <h1 style="margin-top:16px">Varning! Din e-post har hittats i dataintr&aring;ng</h1>
+    <p class="subtitle">Ditt f&ouml;retag kan vara i riskzonen. Prata med en av v&aring;ra CTI-experter omg&aring;ende.</p>
+    <button class="btn btn-red" onclick="show('s-booking')">Boka en gratis genomg&aring;ng &rarr;</button>
+    <div class="trust" style="margin-top:20px">
+      <div class="trust-item"><span>&#x1F512;</span><span>Krypterat</span></div>
+      <div class="trust-item"><span>&#x2705;</span><span>Verifierat</span></div>
+      <div class="trust-item"><span>&#x1F6E1;</span><span>GDPR-Ready</span></div>
+    </div>
+  </div>
+  <div class="screen" id="s-booking">
+    <div class="icon">&#x1F4C5;</div>
+    <h1>Boka en gratis s&auml;kerhetsgenomp&aring;ng</h1>
+    <p class="subtitle">V&auml;lj en tid &mdash; en CTI-expert kontaktar dig.</p>
+    <div class="field" style="margin-top:20px">
+      <label for="f-date">V&auml;lj dag</label>
+      <input type="date" id="f-date">
+    </div>
+    <div class="field">
+      <label>V&auml;lj tid</label>
+      <div class="time-slots">
+        <div class="time-slot" onclick="pickTime(this)">09:00 &ndash; 10:00</div>
+        <div class="time-slot" onclick="pickTime(this)">10:00 &ndash; 11:00</div>
+        <div class="time-slot" onclick="pickTime(this)">13:00 &ndash; 14:00</div>
+        <div class="time-slot" onclick="pickTime(this)">14:00 &ndash; 15:00</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="book()">Bekr&auml;fta bokning &rarr;</button>
+    <p class="disclaimer">Kostnadsfritt och utan f&ouml;rpliktelser.</p>
+  </div>
+  <div class="screen" id="s-confirmed">
+    <div class="icon">&#x1F389;</div>
+    <h1>Din bokning &auml;r bekr&auml;ftad!</h1>
+    <p class="subtitle">Vi ses snart. Du f&aring;r en bekr&auml;ftelse inom kort fr&aring;n v&aring;rt team.</p>
+    <div class="trust" style="margin-top:28px">
+      <div class="trust-item"><span>&#x1F512;</span><span>Krypterat</span></div>
+      <div class="trust-item"><span>&#x2705;</span><span>Verifierat</span></div>
+      <div class="trust-item"><span>&#x1F6E1;</span><span>GDPR-Ready</span></div>
+    </div>
+    <p class="disclaimer" style="margin-top:16px">Fr&aring;gor? Kontakta oss p&aring; hello@ctisecure.se</p>
+  </div>
+</div>
+<script>
+var API = 'https://script.google.com/macros/s/AKfycbwF4PC-5GTQeaL041wUScCcocKpi34zZajnuzVUSdLkYXn20AR60tIPmLFrA1Axbcxq/exec';
+var DEMO = 'demo@ctisecure.se';
+var email = '';
+var time = '';
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+
+function pickTime(el) {
+  document.querySelectorAll('.time-slot').forEach(function(s) { s.classList.remove('selected'); });
+  el.classList.add('selected');
+  time = el.textContent;
+}
+
+function step1() {
+  email = document.getElementById('f-email').value.trim();
+  var consent = document.getElementById('f-consent').checked;
+  var err = document.getElementById('email-err');
+  err.style.display = 'none';
+  if (!email || email.indexOf('@') < 0) { err.style.display = 'block'; return; }
+  if (!consent) { alert('Du måste godkänna integritetspolicyn.'); return; }
+  var btn = document.getElementById('btn1');
+  btn.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+  var url = API + '?step=1&email=' + encodeURIComponent(email);
+  fetch(url, { redirect: 'follow' })
+    .then(function() { show('s2'); })
+    .catch(function() { show('s2'); })
+    .finally(function() { btn.innerHTML = 'Kolla gratis &rarr;'; btn.disabled = false; });
+}
+
+function step2() {
+  var company = document.getElementById('f-company').value.trim();
+  var industry = document.getElementById('f-industry').value;
+  var size = document.getElementById('f-size').value;
+  if (!company || !industry || !size) { alert('Fyll i alla fält.'); return; }
+  var btn = document.getElementById('btn2');
+  btn.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+  var url = API + '?step=2&email=' + encodeURIComponent(email) + '&company=' + encodeURIComponent(company) + '&industry=' + encodeURIComponent(industry) + '&size=' + encodeURIComponent(size) + '&consent=true';
+  if (email === DEMO) {
+    setTimeout(function() {
+      document.getElementById('breach-num').textContent = '5';
+      document.getElementById('breach-badge').textContent = '● HÖG RISK';
+      show('s-breach');
+      btn.innerHTML = 'Visa resultat &rarr;';
+      btn.disabled = false;
+    }, 1000);
+    fetch(url, { redirect: 'follow' }).catch(function() {});
+    return;
+  }
+  fetch(url, { redirect: 'follow' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var count = data.breachCount || 0;
+      if (count === 0) { show('s-clean'); }
+      else {
+        document.getElementById('breach-num').textContent = count;
+        var sev = data.severity || 'Low';
+        var badge = document.getElementById('breach-badge');
+        if (sev === 'High') badge.textContent = '● HÖG RISK';
+        else if (sev === 'Medium') badge.textContent = '● MEDEL RISK';
+        else badge.textContent = '● LÅG RISK';
+        show('s-breach');
+      }
+    })
+    .catch(function() { document.getElementById('breach-num').textContent = '?'; show('s-breach'); })
+    .finally(function() { btn.innerHTML = 'Visa resultat &rarr;'; btn.disabled = false; });
+}
+
+function book() {
+  var date = document.getElementById('f-date').value;
+  if (!date || !time) { alert('Välj datum och tid.'); return; }
+  show('s-confirmed');
+}
+
+document.getElementById('f-date').min = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
